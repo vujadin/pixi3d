@@ -60,6 +60,7 @@ struct Light
 const int LightType_Directional = 0;
 const int LightType_Point = 1;
 const int LightType_Spot = 2;
+const int LightType_Ambient = 3;
 
 #ifdef USE_PUNCTUAL
 uniform Light u_Lights[LIGHT_COUNT];
@@ -237,6 +238,11 @@ vec3 applyDirectionalLight(Light light, MaterialInfo materialInfo, vec3 normal, 
     return light.intensity * light.color * shade;
 }
 
+vec3 applyAmbientLight(Light light, MaterialInfo materialInfo)
+{
+	return light.intensity * light.color * diffuse(materialInfo);
+}
+
 vec3 applyPointLight(Light light, MaterialInfo materialInfo, vec3 normal, vec3 view)
 {
     vec3 pointToLight = light.position - v_Position;
@@ -377,7 +383,7 @@ void main()
     #ifdef USE_SHADOW_MAPPING
         shadow = getShadowContribution();
     #endif
-
+	
 #ifdef USE_PUNCTUAL
     for (int i = 0; i < LIGHT_COUNT; ++i)
     {
@@ -394,6 +400,9 @@ void main()
         {
             color += applySpotLight(light, materialInfo, normal, view, shadow);
         }
+		else if (light.type == LightType_Ambient) {
+			color += applyAmbientLight(light, materialInfo);
+		}
     }
 #endif
 
@@ -457,8 +466,10 @@ void main()
     #ifdef DEBUG_ALPHA
         gl_FragColor.rgb = vec3(baseColor.a);
     #endif
-
+		
     gl_FragColor.a = 1.0;
+	
+	
 
 #endif // !DEBUG_OUTPUT
 }
